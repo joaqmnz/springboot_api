@@ -6,6 +6,7 @@ import com.spring.springboot.repositories.ProductRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +20,12 @@ public class ProductController {
     @Autowired
     ProductRepository productRepository;
 
-    @PostMapping("/produtos")
-    public ResponseEntity<ProductModel> saveProduct(@RequestBody @Valid ProductRecordDto productRecordDto) {
+    @PostMapping(value = "/produtos")
+    public ResponseEntity<Object> saveProduct(@RequestBody @Valid ProductRecordDto productRecordDto,
+                                              @RequestHeader HttpHeaders headers) {
+        if(!headers.get("authorization").get(0).equals("Bearer PostTest"))
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado");
+
         var productModel = new ProductModel();
         BeanUtils.copyProperties(productRecordDto, productModel);
         return ResponseEntity.status(HttpStatus.CREATED).body(productRepository.save(productModel));
@@ -43,7 +48,11 @@ public class ProductController {
 
     @PutMapping("/produtos/{id}")
     public ResponseEntity<Object> updateProduct(@PathVariable(value = "id") UUID id,
-                                                @RequestBody @Valid ProductRecordDto productRecordDto){
+                                                @RequestBody @Valid ProductRecordDto productRecordDto,
+                                                @RequestHeader HttpHeaders headers){
+        if(!headers.get("authorization").get(0).equals("Bearer PutTeste"))
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado");
+
         Optional<ProductModel> product = productRepository.findById(id);
         if(product.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Produto Inexistente");
@@ -55,7 +64,11 @@ public class ProductController {
     }
 
     @DeleteMapping("/produtos/{id}")
-    public ResponseEntity<Object> deleteProduct(@PathVariable(value = "id") UUID id) {
+    public ResponseEntity<Object> deleteProduct(@PathVariable(value = "id") UUID id,
+                                                @RequestHeader HttpHeaders headers) {
+        if(!headers.get("authorization").get(0).equals("Bearer DeleteTest"))
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado");
+
         Optional<ProductModel> product = productRepository.findById(id);
         if(product.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Produto Inexistente");
